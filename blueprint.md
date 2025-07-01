@@ -33,7 +33,7 @@
 
 ### Lessons to Learn
 - **Performance Tuning**: Understanding how to optimize Node.js applications for high concurrency.
-- **Real-time Data Handling**: Gaining insights into managing WebSocket connections and data flow efficiently.
+- **Real-time Data Handling**: Gaining insights into managing WebSocket  connections and data flow efficiently.
 
 ### Unique Insights
 - The importance of user experience in real-time applications cannot be overstated. Ensuring that the dashboard is responsive and informative will significantly impact user satisfaction.
