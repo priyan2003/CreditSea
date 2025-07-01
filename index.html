@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra-Fast Loan Ingestion Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        .connection-status-animate {
+            animation: pulse 2s infinite;
+        }
+        .error-row:hover {
+            background-color: rgba(254, 202, 202, 0.3);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-indigo-900 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <img src="https://placehold.co/40x40" alt="Financial services company logo showing a stylized rocket with financial graph in background" class="rounded-full">
+                    <h1 class="text-2xl font-bold">LoanFlow Pro</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="connection-status" class="flex items-center space-x-2">
+                        <div class="connection-status-animate w-3 h-3 rounded-full bg-green-500"></div>
+                        <span>Connected</span>
+                    </div>
+                    <button id="pause-btn" class="px-4 py-2 bg-indigo-700 hover:bg-indigo-600 rounded-lg transition-colors">
+                        Pause Processing
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <!-- Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Incoming Loans Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-gray-500 font-medium">Incoming Loans</h3>
+                        <div class="text-indigo-600 bg-indigo-100 rounded-full px-3 py-1 text-xs font-semibold">Live</div>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <span id="incoming-rate" class="text-3xl font-bold">0</span>
+                        <span class="text-green-500 text-sm mb-1">+0/sec</span>
+                    </div>
+                </div>
+
+                <!-- Processed Loans Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-gray-500 font-medium">Processed Loans</h3>
+                        <div class="text-indigo-600 bg-indigo-100 rounded-full px-3 py-1 text-xs font-semibold">Live</div>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <span id="processed-rate" class="text-3xl font-bold">0</span>
+                        <span class="text-green-500 text-sm mb-1">+0/sec</span>
+                    </div>
+                </div>
+
+                <!-- Error Rate Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-gray-500 font-medium">Error Rate</h3>
+                        <div class="text-indigo-600 bg-indigo-100 rounded-full px-3 py-1 text-xs font-semibold">Live</div>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <span id="error-rate" class="text-3xl font-bold">0%</span>
+                        <span class="text-red-500 text-sm mb-1">0 in last min</span>
+                    </div>
+                </div>
+
+                <!-- Latency Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-gray-500 font-medium">Avg Latency</h3>
+                        <div class="text-indigo-600 bg-indigo-100 rounded-full px-3 py-1 text-xs font-semibold">Live</div>
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <span id="avg-latency" class="text-3xl font-bold">0ms</span>
+                        <span class="text-green-500 text-sm mb-1">within SLA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Rate Comparison Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Incoming vs Processed Loans</h3>
+                    <canvas id="rateChart" height="250"></canvas>
+                </div>
+
+                <!-- Error Distribution Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Error Types Distribution</h3>
+                    <canvas id="errorChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Error Logs Section -->
+            <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold">Error Logs</h3>
+                    <div class="mt-4 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+                        <div class="relative w-full md:w-96">
+                            <input type="text" id="search-input" placeholder="Search by applicant, ID, or error..." 
+                                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex space-x-3">
+                            <select id="error-type-filter" class="px-3 py-2 border rounded-lg">
+                                <option value="">All Error Types</option>
+                                <option value="validation">Validation Errors</option>
+                                <option value="api">API Failures</option>
+                                <option value="timeout">Timeouts</option>
+                                <option value="database">Database Errors</option>
+                            </select>
+                            <select id="timeframe-filter" class="px-3 py-2 border rounded-lg">
+                                <option value="5m">Last 5 minutes</option>
+                                <option value="15m">Last 15 minutes</option>
+                                <option value="1h">Last hour</option>
+                                <option value="24h">Last 24 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="error-logs-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Error logs will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        Showing <span id="current-count">0</span> of <span id="total-count">0</span> errors
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prev-page" class="px-3 py-1 border rounded-lg bg-gray-100 disabled:opacity-50">Previous</button>
+                        <button id="next-page" class="px-3 py-1 border rounded-lg bg-gray-100 disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Controls -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Processing Controls</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Retry Strategy</h4>
+                        <div class="flex flex-col space-y-2">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="retry-strategy" class="h-4 w-4 text-indigo-600" value="immediate" checked>
+                                <span class="ml-2 text-gray-700">Immediate</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="retry-strategy" class="h-4 w-4 text-indigo-600" value="backoff">
+                                <span class="ml-2 text-gray-700">Exponential Backoff</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Batch Size</h4>
+                        <select id="batch-size" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="50">50 records</option>
+                            <option value="100" selected>100 records</option>
+                            <option value="200">200 records</option>
+                            <option value="500">500 records</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="retry-failed" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            Retry Failed Records
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/dis/Script.js"></script>
+</body>
+</html>

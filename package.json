@@ -1,0 +1,16 @@
+{
+  "name": "creditsea",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "Script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "tslint": "^5.20.1",
+    "typescript": "^5.8.3"
+  }
+}
