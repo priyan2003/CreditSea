@@ -23,7 +23,6 @@
                 chartsInitialized: false
             };
 
-            // DOM Elements
             const elements = {
                 connectionStatus: document.getElementById('connection-status'),
                 pauseBtn: document.getElementById('pause-btn'),
@@ -46,8 +45,6 @@
                 rateChart: null,
                 errorChart: null
             };
-
-            // Event listeners
             elements.pauseBtn.addEventListener('click', toggleProcessing);
             elements.searchInput.addEventListener('input', handleSearch);
             elements.errorTypeFilter.addEventListener('change', handleFilterChange);
@@ -60,11 +57,9 @@
                 radio.addEventListener('change', updateRetryStrategy);
             });
 
-            // Initialize charts
             function initializeCharts() {
                 if (state.chartsInitialized) return;
 
-                // Rate chart
                 elements.rateChart = new Chart(elements.rateChartCtx, {
                     type: 'line',
                     data: {
@@ -105,7 +100,6 @@
                     }
                 });
 
-                // Error chart
                 elements.errorChart = new Chart(elements.errorChartCtx, {
                     type: 'doughnut',
                     data: {
@@ -137,38 +131,31 @@
 
                 state.chartsInitialized = true;
             }
-
-            // Simulate loan processing
             function simulateProcessing() {
                 if (state.processing) {
-                    // Random fluctuation between 450-550 requests per second
+                    
                     state.incomingRate = Math.floor(Math.random() * 100) + 450;
                     
-                    // Processed rate is slightly behind incoming rate
                     state.processedRate = Math.max(Math.floor(state.incomingRate * 0.98 - Math.random() * 10), 0);
                     
-                    // Error rate between 0.1% and 2%
+                    
                     state.errorRate = Math.random() < 0.1 ? Math.random() * 2 : state.errorRate;
                     
-                    // Latency between 80-180ms
+                    
                     state.avgLatency = Math.floor(Math.random() * 100) + 80;
                 }
 
-                // Update UI
                 updateMetrics();
                 updateRateChart();
                 updateErrorChart();
                 
-                // Generate some errors periodically
                 if (Math.random() < 0.3) {
                     generateErrors();
                 }
                 
-                // Continue simulation
                 setTimeout(simulateProcessing, 1000);
             }
 
-            // Generate simulated errors
             function generateErrors() {
                 const errorTypes = ['validation', 'api', 'timeout', 'database'];
                 const names = ['John Smith', 'Emma Johnson', 'Michael Williams', 'Sophia Brown', 'James Jones'];
@@ -198,7 +185,6 @@
                     });
                 }
                 
-                // Keep errors under 200
                 if (state.errors.length > 200) {
                     state.errors = state.errors.slice(0, 200);
                 }
@@ -208,14 +194,12 @@
                 updateErrorChart();
             }
 
-            // Update metrics display
             function updateMetrics() {
                 elements.incomingRate.textContent = state.incomingRate;
                 elements.processedRate.textContent = state.processedRate;
                 elements.errorRate.textContent = state.errorRate.toFixed(1) + '%';
                 elements.avgLatency.textContent = state.avgLatency + 'ms';
                 
-                // Add some visual indication of throughput
                 const incomingDiff = state.incomingRate - state.processedRate;
                 const incomingChange = document.querySelector('#incoming-rate + span');
                 const processedChange = document.querySelector('#processed-rate + span');
@@ -242,11 +226,9 @@
                 }
             }
 
-            // Update rate chart
             function updateRateChart() {
                 if (!state.chartsInitialized) return;
                 
-                // Shift data left
                 const rateIncoming = elements.rateChart.data.datasets[0].data;
                 const rateProcessed = elements.rateChart.data.datasets[1].data;
                 
@@ -259,7 +241,6 @@
                 elements.rateChart.update();
             }
 
-            // Update error chart
             function updateErrorChart() {
                 if (!state.chartsInitialized) return;
                 
@@ -286,20 +267,16 @@
                 elements.errorChart.update();
             }
 
-            // Filter errors based on search and filters
             function filterErrors() {
                 state.filteredErrors = state.errors.filter(error => {
-                    // Apply search term filter
                     const matchesSearch = state.searchTerm === '' || 
                         error.id.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
                         error.applicant.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
                         error.details.toLowerCase().includes(state.searchTerm.toLowerCase());
                     
-                    // Apply error type filter
                     const matchesType = state.errorTypeFilter === '' || 
                         error.type === state.errorTypeFilter;
                     
-                    // Apply timeframe filter (simplified for demo)
                     const now = new Date();
                     const errorTime = new Date(error.timestamp);
                     let timeframeMinutes;
@@ -318,7 +295,6 @@
                 });
             }
 
-            // Render error logs table
             function renderErrorLogs() {
                 elements.errorLogsBody.innerHTML = '';
                 
@@ -430,8 +406,6 @@
                 elements.prevPage.disabled = state.currentPage === 1;
                 elements.nextPage.disabled = endIdx >= state.filteredErrors.length;
             }
-
-            // Toggle processing state
             function toggleProcessing() {
                 state.processing = !state.processing;
                 elements.pauseBtn.textContent = state.processing ? 'Pause Processing' : 'Resume Processing';
