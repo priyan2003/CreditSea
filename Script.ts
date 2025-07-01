@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applicant: string;
     type: ErrorType;
     details: string;
+
     status: RetryStatus;
   }
 
